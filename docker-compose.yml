@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=cloud_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+
+  backend:
+    build:
+      context: ./backend
+      network: host
+    restart: always
+    volumes:
+      - ./user_files:/app/user_files
+
+    command: gunicorn backend.wsgi:application --bind 0.0.0.0:8000
+    depends_on:
+      - db
+
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      network: host
+
+    restart: always
+
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
